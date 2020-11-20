@@ -106,6 +106,7 @@ arbitraryTypeVariableName = pure (mkName "aTyVarName")
 -- s = $(location >>= \Loc{loc_module=m, loc_start=(sl,sc), loc_end=(el,ec)} -> lift (m <> ":" <> show sl))
 #endif
 
+#if 0
 deriving instance Serialize AnnTarget
 deriving instance Serialize Bang
 deriving instance Serialize Body
@@ -251,5 +252,6 @@ deriving instance Serialize Bytes
 instance SafeCopy Bytes where version = 1
 #if 0
 deriving instance NFData Bytes
+#endif
 #endif
 #endif

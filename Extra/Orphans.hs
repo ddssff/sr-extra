@@ -9,6 +9,7 @@ module Extra.Orphans where
 
 import Data.Graph.Inductive as G
 import Data.List (intercalate)
+import Data.Monoid ((<>))
 import Data.Proxy (Proxy(Proxy))
 import Data.SafeCopy (base, contain,
                       SafeCopy(errorTypeName, getCopy, kind, putCopy, version))
