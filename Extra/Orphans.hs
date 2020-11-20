@@ -50,8 +50,7 @@ deriving instance Generic UTCTime
 deriving instance Generic URIAuth
 #endif
 
--- $(deriveLift ''UserId)
-instance Lift UserId where lift (UserId x0) = [|UserId $(lift x0)|]
+$(deriveLift ''UserId)
 
 $(deriveLift ''G.Gr)
 $(deriveLift ''G.NodeMap)
