@@ -87,6 +87,7 @@ Library
     Extra.Debug,
     Extra.Debug2,
     Extra.Either,
+    Extra.EnvPath,
     Extra.ErrorControl,
     Extra.ErrorSet,
     Extra.Except,
@@ -106,6 +107,7 @@ Library
     Extra.Orphans,
     Extra.Orphans2,
     Extra.Orphans3,
+    Extra.Pretty,
     Extra.QuickCheck,
     Extra.SafeCopy,
     Extra.Serialize,
@@ -119,10 +121,6 @@ Library
   if impl (ghc >= 8.6)
     Exposed-modules:
       Extra.Errors
-  if impl (ghc >= 8.2)
-    Exposed-modules:
-      Extra.EnvPath,
-      Extra.Pretty
   if !impl(ghcjs)
     Build-Depends:
       show-please,
