@@ -7,6 +7,7 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE PackageImports #-}
+{-# LANGUAGE PolyKinds #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE TemplateHaskell #-}
@@ -26,6 +27,7 @@ import GHC.Word
 #endif
 import Language.Haskell.TH
 import Language.Haskell.TH.Instances ()
+import Language.Haskell.TH.Lift
 import Language.Haskell.TH.PprLib (Doc, hcat, ptext)
 import Language.Haskell.TH.Syntax
 import Prelude hiding (foldl1)
@@ -55,7 +57,7 @@ instance Data TypeRep where
 deriving instance Serialize (Proxy a)
 
 #if !__GHCJS__
-instance Lift (Proxy a) where lift Proxy = [|Proxy|]
+$(deriveLift ''Proxy)
 
 instance Arbitrary NameSpace where
     arbitrary = elements [VarName, DataName, TcClsName]
