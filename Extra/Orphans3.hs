@@ -21,6 +21,9 @@ import Data.Proxy (Proxy(Proxy))
 import Data.SafeCopy (SafeCopy(..))
 import Extra.Serialize (Serialize)
 import Extra.Orphans ()
+#if MIN_VERSION_template_haskell(2,16,0)
+import GHC.Word
+#endif
 import Language.Haskell.TH
 import Language.Haskell.TH.Instances ()
 import Language.Haskell.TH.PprLib (Doc, hcat, ptext)
@@ -244,7 +247,9 @@ instance SafeCopy TySynEqn where version = 1
 instance SafeCopy TyVarBndr where version = 1
 
 #if MIN_VERSION_template_haskell(2,16,0)
+deriving instance Serialize Word8
 deriving instance Serialize Bytes
+instance SafeCopy Word8 where version = 1
 instance SafeCopy Bytes where version = 1
 #if 0
 deriving instance NFData Bytes
