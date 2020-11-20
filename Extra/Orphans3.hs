@@ -243,8 +243,10 @@ instance SafeCopy TypeFamilyHead where version = 1
 instance SafeCopy TySynEqn where version = 1
 instance SafeCopy TyVarBndr where version = 1
 
-#if 0
+#if MIN_VERSION_template_haskell(2,16,0)
 deriving instance Serialize Bytes
 instance SafeCopy Bytes where version = 1
+#if 0
 deriving instance NFData Bytes
+#endif
 #endif

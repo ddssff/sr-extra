@@ -89,7 +89,6 @@ Library
     Extra.Either,
     Extra.EnvPath,
     Extra.ErrorControl,
-    Extra.Errors,
     Extra.ErrorSet,
     Extra.Except,
     Extra.Exit,
@@ -119,6 +118,9 @@ Library
     Extra.URI,
     Extra.URIQuery,
     Extra.Verbosity
+  if impl (ghc >= 8.6)
+    Exposed-modules:
+      Extra.Errors
   if !impl(ghcjs)
     Build-Depends:
       show-please,
