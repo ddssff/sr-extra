@@ -15,11 +15,8 @@
 module Extra.Orphans3 where
 
 import Data.Data (Data, dataTypeOf, gunfold, mkNoRepType, toConstr, TypeRep)
-import Data.Foldable
---import Data.Function.Memoize (deriveMemoizable)
 import Data.Generics.Instances ()
-import Data.ListLike as LL hiding (concat, sequence, toList)
--- import Data.Order (Order, toPairs)
+import Data.ListLike as LL hiding (sequence, toList)
 import Data.Proxy (Proxy(Proxy))
 import Data.SafeCopy (SafeCopy(..))
 import Extra.Serialize (Serialize)
@@ -28,7 +25,7 @@ import Language.Haskell.TH
 import Language.Haskell.TH.Instances ()
 import Language.Haskell.TH.PprLib (Doc, hcat, ptext)
 import Language.Haskell.TH.Syntax
-import Prelude hiding (concat, foldl1)
+import Prelude hiding (foldl1)
 #if !__GHCJS__
 import Network.URI
 import Test.QuickCheck (Arbitrary(arbitrary), elements, Gen, oneof)
@@ -92,7 +89,7 @@ instance Arbitrary URIAuth where
         where
           genRegName = do
             domainName <- elements ["noomii", "google", "yahoo"]
-            return $ concat ["www.", domainName, ".com"]
+            return $ mconcat ["www.", domainName, ".com"]
 
 arbitraryKind :: Gen Kind
 arbitraryKind = oneof [pure StarT {-, finish me -}]
@@ -245,3 +242,9 @@ instance SafeCopy Type where version = 1
 instance SafeCopy TypeFamilyHead where version = 1
 instance SafeCopy TySynEqn where version = 1
 instance SafeCopy TyVarBndr where version = 1
+
+#if MIN_VERSION_template_haskell(2,15,0)
+deriving instance Serialize Bytes
+instance SafeCopy Bytes where version = 1
+deriving instance NFData Bytes
+#endif

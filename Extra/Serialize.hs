@@ -16,34 +16,30 @@
 
 module Extra.Serialize
     ( DecodeError(..)
-    , HasDecodeError(fromDecodeError)
-    , HasDecodeFailure
-    , decodeFailure
-    , fromDecodeFailure
     , module Data.Serialize
-    , decodePrism, deserializePrism
-    , encodeGetter, serializeGetter
     , deriveSerializeViaSafeCopy
-    , decode
-    , Serialize.encode
+    , decodeAll
     , decode'
     , decodeM
     , decodeM'
-    , FakeTypeRep(..), fakeTypeRep
+    , FakeTypeRep(..)
+    , fakeTypeRep
+    , decodePrism
+    , encodeGetter
+    , HasDecodeError(fromDecodeError)
     ) where
 
 import Control.Exception (ErrorCall(..), evaluate, )
-import Control.Lens (Getter, Prism', prism, re, review)
+import Control.Lens (Getter, Prism', prism, re)
 import Control.Monad.Catch (catch, MonadCatch)
-import Control.Monad.Except (MonadError, throwError)
+import Control.Monad.Except (MonadError)
 import Data.ByteString as B (ByteString, null)
 #ifndef OMIT_DATA_INSTANCES
 import Data.Data (Data)
 #endif
 import Data.Data (Proxy(Proxy))
 import Data.SafeCopy (SafeCopy(..), safeGet, safePut)
-import Data.Serialize hiding (decode, encode)
-import qualified Data.Serialize as Serialize (encode)
+import Data.Serialize
 import Data.Text as T hiding (concat, intercalate)
 import Data.Text.Lazy as LT hiding (concat, intercalate)
 import Data.Text.Encoding as TE
@@ -53,7 +49,7 @@ import Data.Typeable (Typeable, typeRep)
 import Data.UUID.Orphans ()
 import Data.UUID (UUID)
 import Data.UUID.Orphans ()
-import Extra.ErrorSet (Member(follow))
+import Extra.Errors (Member, OneOf, throwMember)
 import Extra.Orphans ()
 import Extra.Time (Zulu(..))
 import GHC.Generics (Generic)
@@ -61,28 +57,22 @@ import Language.Haskell.TH (Dec, Loc, TypeQ, Q)
 import Network.URI (URI(..), URIAuth(..))
 import System.IO.Unsafe (unsafePerformIO)
 
+#if 0
+-- We can't make a Data instance for TypeRep because part of it is in
+-- Data.Typeable.Internal, a hidden module in base.
+instance SafeCopy TypeRep
+deriving instance Data TypeRep
+data DecodeError = DecodeError ByteString TypeRep String deriving (Generic, Eq, Ord, Typeable)
+#else
 newtype FakeTypeRep = FakeTypeRep String deriving (Generic, Eq, Ord, Serialize)
 instance SafeCopy FakeTypeRep
 fakeTypeRep :: forall a. Typeable a => Proxy a -> FakeTypeRep
 fakeTypeRep a = FakeTypeRep (show (typeRep a))
 
 data DecodeError = DecodeError ByteString FakeTypeRep String deriving (Generic, Eq, Ord, Typeable)
+#endif
 
-class HasDecodeError e where fromDecodeError :: DecodeError -> e
-instance HasDecodeError DecodeError where fromDecodeError = id
 instance Serialize DecodeError where get = safeGet; put = safePut
-
--- New name for backwards compatibility, especially in appraisalscribe-migrate.
-type HasDecodeFailure e = Member DecodeError e
-decodeFailure :: Member DecodeError e => Prism' e DecodeError
-decodeFailure = follow
-fromDecodeFailure :: Member DecodeError e => DecodeError -> e
-fromDecodeFailure = review decodeFailure
-
--- instance Member DecodeError DecodeError where follow = id
-
-encode :: Serialize a => a -> ByteString
-encode = Serialize.encode
 
 -- | Decode a value from a strict ByteString, reconstructing the original
 -- structure.  Unlike Data.Serialize.decode, this function only succeeds
@@ -92,12 +82,12 @@ encode = Serialize.encode
 --   Left "decode \"xy\" failed to consume \"y\""
 --   > Data.Serialize.decode (encode 'x' <> encode 'y') :: Either String Char
 --   Right 'x'
-decode :: forall a. Serialize a => ByteString -> Either String a
-decode b =
+decodeAll :: forall a. Serialize a => ByteString -> Either String a
+decodeAll b =
   case runGetState get b 0 of
     Left s -> Left s
-    Right (a, remaining) | B.null remaining -> Right a
-    Right (a, remaining) -> Left ("decode " <> show b <> " failed to consume " <> show remaining)
+    Right (a, more) | B.null more -> Right a
+    Right (_, more) -> Left ("decode " <> show b <> " failed to consume " <> show more)
 
 -- | A Serialize instance based on safecopy.  This means that
 -- migrations will be performed upon deserialization, which is handy
@@ -144,13 +134,12 @@ deriving instance Serialize URIAuth
 deriving instance Serialize Zulu
 
 -- | Monadic version of decode.
-decodeM ::
-  forall a e m. (Serialize a, Typeable a, HasDecodeError e, MonadError e m)
+decodeM :: forall a e m. (Serialize a, Typeable a, Member DecodeError e, MonadError (OneOf e) m)
   => ByteString
   -> m a
 decodeM bs =
   case decode bs of
-    Left s -> throwError (fromDecodeError (DecodeError bs (fakeTypeRep (Proxy @a)) s))
+    Left s -> throwMember (DecodeError bs (fakeTypeRep (Proxy @a)) s)
     Right a -> return a
 
 -- | Like 'decodeM', but also catches any ErrorCall thrown and lifts
@@ -159,16 +148,16 @@ decodeM bs =
 -- outside the serialize package, in which case this (and decode') are
 -- pointless.
 decodeM' ::
-  forall e m a. (Serialize a, Typeable a, HasDecodeError e, MonadError e m, MonadCatch m)
+  forall e m a. (Serialize a, Typeable a, Member DecodeError e, MonadError (OneOf e) m, MonadCatch m)
   => ByteString
   -> m a
 decodeM' bs = go `catch` handle
   where
     go = case decode bs of
-           Left s -> throwError (fromDecodeError (DecodeError bs (fakeTypeRep (Proxy @a)) s))
+           Left s -> throwMember (DecodeError bs (fakeTypeRep (Proxy @a)) s)
            Right a -> return a
     handle :: ErrorCall -> m a
-    handle (ErrorCall s) = throwError $ fromDecodeError $ DecodeError bs (fakeTypeRep (Proxy @a)) ("ErrorCall: " <> s)
+    handle (ErrorCall s) = throwMember $ DecodeError bs (fakeTypeRep (Proxy @a)) ("ErrorCall: " <> s)
 
 -- | Version of decode that catches any thrown ErrorCall and modifies
 -- its message.
@@ -179,22 +168,11 @@ decode' b =
     handle :: ErrorCall -> IO (Either String a)
     handle e = return $ Left (show e)
 
--- | Serialize/deserialize prism.
-deserializePrism :: forall a. (Serialize a) => Prism' ByteString a
-deserializePrism = decodePrism
-{-# DEPRECATED deserializePrism "dumb name - use decodePrism" #-}
-
--- | Serialize/deserialize prism.
 decodePrism :: forall a. (Serialize a) => Prism' ByteString a
 decodePrism = prism encode (\s -> either (\_ -> Left s) Right (decode s :: Either String a))
 
--- | Inverting a prism turns it into a getter.
-serializeGetter :: forall a. (Serialize a) => Getter a ByteString
-serializeGetter = re deserializePrism
-{-# DEPRECATED serializeGetter "dumb name - use encodeGetter" #-}
-
 encodeGetter :: forall a. (Serialize a) => Getter a ByteString
-encodeGetter = re deserializePrism
+encodeGetter = re decodePrism
 
 instance SafeCopy DecodeError where version = 1
 
@@ -207,3 +185,9 @@ deriving instance Data DecodeError
 deriving instance Show FakeTypeRep
 deriving instance Show DecodeError
 #endif
+
+-- Required by appraisalscribe-migrate
+class HasDecodeError e where fromDecodeError :: DecodeError -> e
+{-# DEPRECATED HasDecodeError "use Member DecodeError" #-}
+{-# DEPRECATED fromDecodeError "use throwMember or review oneOf" #-}
+instance HasDecodeError DecodeError where fromDecodeError = id

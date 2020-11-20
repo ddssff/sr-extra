@@ -1,5 +1,5 @@
 Name:           sr-extra
-Version:        1.71
+Version:        1.84.1
 License:        BSD3
 License-File:   COPYING
 Author:         David Fox
@@ -16,7 +16,7 @@ Description:
 Maintainer:     David Fox <dsf@seereason.com>
 Homepage:       https://github.com/seereason/sr-extra
 Build-Type:     Simple
-Cabal-Version:  >= 1.4
+Cabal-Version:  >= 1.10
 
 flag network-uri
   Description: Get Network.URI from the network-uri package rather than the
@@ -33,9 +33,11 @@ flag omit-data
   Default: False
 
 Library
+  default-language: Haskell2010
   GHC-Options: -Wall -Wredundant-constraints
   Build-Depends:
     base < 5,
+    base64-bytestring,
     bytestring,
     bzlib,
     Cabal,
@@ -44,6 +46,7 @@ Library
     directory,
     exceptions,
     fgl,
+    filemanip,
     filepath,
     generic-data,
     hslogger,
@@ -53,6 +56,7 @@ Library
     mtl,
     pretty,
     pureMD5,
+    QuickCheck >= 2 && < 3,
     random,
     safecopy >= 0.9.5,
     show-combinators,
@@ -75,9 +79,9 @@ Library
   C-Sources:         cbits/gwinsz.c
   Include-Dirs:        cbits
   Install-Includes:    gwinsz.h
-  Extensions: ConstraintKinds, CPP, DataKinds, DeriveDataTypeable, DeriveFunctor, DeriveGeneric
-  Extensions: FlexibleInstances, FlexibleContexts, MultiParamTypeClasses, RankNTypes
-  Extensions: ScopedTypeVariables, StandaloneDeriving, TypeApplications, TypeFamilies
+  Default-Extensions: ConstraintKinds, CPP, DataKinds, DeriveDataTypeable, DeriveFunctor, DeriveGeneric
+  Default-Extensions: FlexibleInstances, FlexibleContexts, MultiParamTypeClasses, RankNTypes
+  Default-Extensions: ScopedTypeVariables, StandaloneDeriving, TupleSections, TypeApplications, TypeFamilies
   Exposed-modules:
     Extra.Bool,
     Extra.Debug,
@@ -85,7 +89,7 @@ Library
     Extra.Either,
     Extra.EnvPath,
     Extra.ErrorControl,
-    Extra.ErrorControlInstances,
+    Extra.Errors,
     Extra.ErrorSet,
     Extra.Except,
     Extra.Exit,
@@ -96,7 +100,8 @@ Library
     Extra.IOThread
     Extra.List,
     Extra.HughesPJ,
-    Extra.Log,
+    Extra.IO,
+    Extra.LocalStorageEncode,
     Extra.Misc,
     Extra.Monad.Supply,
     Extra.Net,
@@ -104,10 +109,9 @@ Library
     Extra.Orphans2,
     Extra.Orphans3,
     Extra.Pretty,
+    Extra.QuickCheck,
     Extra.SafeCopy,
-    Extra.SafeCopyDebug,
     Extra.Serialize,
-    Extra.SerializeDebug,
     Extra.Text,
     Extra.TH,
     Extra.Time,
@@ -118,15 +122,12 @@ Library
   if !impl(ghcjs)
     Build-Depends:
       show-please,
-      filemanip,
       HUnit,
       process,
-      process-extras,
-      QuickCheck >= 2 && < 3
+      process-extras
     Exposed-Modules:
       Extra.GPGSign,
       Extra.Lock,
-      Extra.IO,
       Extra.Process,
       Extra.SSH,
       Test.QUnit,
