@@ -109,8 +109,6 @@ Library
     Extra.Orphans3,
     Extra.Pretty,
     Extra.QuickCheck,
-    Extra.SafeCopy,
-    Extra.Serialize,
     Extra.Text,
     Extra.TH,
     Extra.Time,
@@ -120,7 +118,9 @@ Library
     Extra.Verbosity
   if impl (ghc >= 8.6)
     Exposed-modules:
-      Extra.Errors
+      Extra.Errors,
+      Extra.SafeCopy,
+      Extra.Serialize
   if !impl(ghcjs)
     Build-Depends:
       show-please,
