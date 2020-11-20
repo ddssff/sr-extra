@@ -249,7 +249,6 @@ instance SafeCopy TyVarBndr where version = 1
 #if MIN_VERSION_template_haskell(2,16,0)
 deriving instance Serialize Word8
 deriving instance Serialize Bytes
-instance SafeCopy Word8 where version = 1
 instance SafeCopy Bytes where version = 1
 #if 0
 deriving instance NFData Bytes
