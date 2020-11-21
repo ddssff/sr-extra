@@ -73,9 +73,9 @@ data RunOptions a m
     | RunOptions [RunOptions a m]
 
 instance Semigroup (RunOptions a m) where
-    RunOptions a <> RunOptions b = RunOptions (a <> b)
-    RunOptions a <> b = RunOptions (a <> [b])
-    a <> RunOptions b = RunOptions ([a] <> b)
+    RunOptions a <> RunOptions b = RunOptions (a ++ b)
+    RunOptions a <> b = RunOptions (a ++ [b])
+    a <> RunOptions b = RunOptions ([a] ++ b)
     a <> b = RunOptions [a, b]
 
 showCommand :: MonadIO m => String -> CreateProcess -> m ()
