@@ -55,7 +55,7 @@ import Data.UUID.Orphans ()
 import Extra.Orphans ()
 import Extra.Time (Zulu(..))
 import GHC.Generics (Generic)
-import Language.Haskell.TH (Dec, Loc, TypeQ, Q)
+import Language.Haskell.TH (Dec, Loc(..), TypeQ, Q)
 import Network.URI (URI(..), URIAuth(..))
 import System.IO.Unsafe (unsafePerformIO)
 
