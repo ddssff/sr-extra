@@ -22,7 +22,6 @@ import Control.Lens ((%=), (.=), Lens', use)
 import Control.Monad (when)
 import Control.Monad.RWS
 import Data.List (intercalate)
-import Data.Semigroup (Semigroup((<>)))
 import qualified Debug.Trace
 import Language.Haskell.TH.Instances ()
 import System.Log.Logger (Priority(..))
