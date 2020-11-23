@@ -122,12 +122,12 @@ run opts p input = do
 --runVE p input = try $ runV p input
 
 runV ::
-    (Eq c, IsString a, ListLikeProcessIO a c, HasLoc e, MonadIO m, MonadError e m)
+    (Eq c, IsString a, ListLikeProcessIO a c, HasLoc e, MonadIO m, MonadError e m, Semigroup a)
     => CreateProcess -> a -> m (ExitCode, a, a)
 runV p input = run (StartMessage showCommand <> OverOutput putIndented <> FinishMessage showCommandAndResult) p input
 
 runVE ::
-    (Eq c, IsString a, ListLikeProcessIO a c, MonadCatch m, HasLoc e, Exception e, MonadError e m, MonadIO m)
+    (Eq c, IsString a, ListLikeProcessIO a c, MonadCatch m, HasLoc e, Exception e, MonadError e m, MonadIO m, Semigroup a)
     => CreateProcess -> a -> m (Either e (ExitCode, a, a))
 runVE p i = try $ runV p i
 
@@ -239,13 +239,13 @@ modifyProcessEnv pairs p = do
   return $ p {env = Just env'}
 
 runV2 ::
-    (MonadIO m, MonadCatch m, Eq c, IsString a, ListLikeProcessIO a c)
+    (MonadIO m, MonadCatch m, Eq c, IsString a, ListLikeProcessIO a c, Semigroup a)
     => [Loc] -> CreateProcess -> a -> m (ExitCode, a, a)
 runV2 locs p input =
     run2 locs (StartMessage (showCommand' locs) <> OverOutput putIndented <> FinishMessage showCommandAndResult) p input
 
 runVE2 ::
-    forall a c e m. (Eq c, IsString a, ListLikeProcessIO a c, MonadIO m, MonadCatch m, Exception e)
+    forall a c e m. (Eq c, IsString a, ListLikeProcessIO a c, MonadIO m, MonadCatch m, Exception e, Semigroup a)
     => [Loc] -> CreateProcess -> a -> m (Either e (ExitCode, a, a))
 runVE2 locs p input = do
     try (runV2 locs p input)
@@ -294,7 +294,7 @@ run2 locs opts p input = do
 -- stray copies of the stuff above that I moved here, with MonadApt constraints
 
 runV3 ::
-    (Eq c, IsString a, ListLikeProcessIO a c, HasEnvRoot r, MonadReader r m, MonadIO m, MonadCatch m)
+    (Eq c, IsString a, ListLikeProcessIO a c, HasEnvRoot r, MonadReader r m, MonadIO m, MonadCatch m, Semigroup a)
     => [Loc] -> CreateProcess -> a -> m (ExitCode, a, a)
 runV3 locs p input =
     run2 locs (StartMessage showCommand3' <> OverOutput putIndented <> FinishMessage showCommandAndResult) p input
